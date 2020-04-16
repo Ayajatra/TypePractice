@@ -1,0 +1,64 @@
+﻿body {
+    margin: 0;
+    background-color: #1E1E1E;
+    color: #F1F1F1;
+    text-align: center;
+}
+
+.main {
+    max-width: 80%;
+    margin: auto;
+}
+
+#button-generate {
+    font-size: 1.2em;
+    margin-bottom: 1em;
+    padding: 8px 16px;
+    outline: 0;
+    background-color: darkslateblue;
+    color: #F1F1F1;
+    border: 0;
+}
+
+#div-text-content {
+    border: 1px solid #F1F1F1;
+    padding: 5px;
+    font-size: 2em;
+    margin-bottom: 5px;
+    width: 100%;
+    text-align: left;
+}
+
+#input-text {
+    font-size: 2em;
+    padding: 5px;
+    width: 100%;
+    background-color: #1E1E1E;
+    color: #F1F1F1;
+    outline: 0;
+}
+
+.span-why {
+    margin-right: -8px;
+}
+
+p {
+    display: inline-block;
+    margin: 0;
+}
+
+progress {
+    width: calc(100% + 10px);
+    height: 25px;
+    margin-bottom: 5px;
+}
+
+#div-wpm-container {
+    font-size: 1.4em;
+    margin: 1em;
+}
+
+#p-note {
+    font-size: 1.4em;
+    margin-top: 5px;
+}

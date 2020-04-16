@@ -1,0 +1,178 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<h1>Type Practice</h1>
+<button id="button-generate" @onclick="GenerateRandomText">Generate Random Text</button>
+<br />
+<progress max="@generatedWords.Length" value="@inputIndex"></progress>
+<div id="div-wpm-container">
+    <p>@CalculateWpm() WPM</p>
+</div>
+
+<div id="div-text-content">
+    @for (int i = 0; i < generatedWords.Length; i++)
+    {
+        var word = generatedWords[i];
+        if (i == inputIndex)
+        {
+            <p>
+                @for (int j = 0; j < word.Length; j++)
+                {
+                    var _class = j + 1 == word.Length ? "" : "span-why";
+                    if (j < InputText.Length)
+                    {
+                        <span class="@_class" style="color: @(word[j] == InputText[j] ? "rebeccapurple" : "orangered")">@word[j]</span>
+                    }
+                    else
+                    {
+                        <span class="@_class">@word[j]</span>
+                    }
+                }
+            </p>
+        }
+        else
+        {
+            <p style="@(i < inputIndex ? "color: rebeccapurple" : "")">@word</p>
+        }
+    }
+</div>
+<input id="input-text" @bind="InputText" @bind:event="oninput" disabled="@(inputIndex == generatedWords.Length)" />
+<p id="p-note">Note: Wpm only start counting after first keystrock</p>
+
+@code {
+    string[] punctuations = new[]
+    {
+        ".",
+        "?",
+        "!",
+        ",",
+        ";"
+    };
+
+    Random random = new Random();
+    string[] words;
+    string[] generatedWords = new string[0];
+
+    string inputText = "";
+    string InputText
+    {
+        get => inputText;
+        set
+        {
+            inputText = value;
+
+            if (inputIndex == generatedWords.Length)
+            {
+                return;
+            }
+
+            if (InputText != "")
+            {
+                if (startTime == default)
+                {
+                    startTime = DateTime.Now.TimeOfDay;
+                }
+
+                var isLastWord = inputIndex + 1 == generatedWords.Length;
+                var text = isLastWord
+                    ? InputText
+                    : InputText.Substring(0, InputText.Length - 1);
+
+                if (text == generatedWords[inputIndex] &&
+                    (isLastWord || InputText[InputText.Length - 1] == ' '))
+                {
+                    inputIndex++;
+                    InputText = "";
+                    lastWordFinishedTime = DateTime.Now.TimeOfDay;
+                }
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    int inputIndex = 0;
+    TimeSpan startTime;
+    TimeSpan lastWordFinishedTime;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            words = (await Http.GetStringAsync("/words.txt")).Split('\n');
+            GenerateRandomText();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    async void GenerateRandomText()
+    {
+        while (words == null)
+        {
+            await Task.Delay(50);
+        }
+
+        InputText = "";
+        inputIndex = 0;
+        startTime = default;
+        lastWordFinishedTime = default;
+
+        bool capitalizeNextWord = true;
+        var texts = new StringBuilder();
+        int numberOfSentences = random.Next(1, 5);
+        for (int i = 0; i < numberOfSentences; i++)
+        {
+            int numberOfWords = random.Next(5, 16);
+            for (int j = 0; j < numberOfWords; j++)
+            {
+                var word = words[random.Next(words.Length)];
+                if (capitalizeNextWord)
+                {
+                    word = word.Capitalize();
+                    capitalizeNextWord = false;
+                }
+
+                texts.Append(word).Append(" ");
+            }
+
+            var punctuation = punctuations[random.Next(punctuations.Length)];
+            if (punctuation != "," && punctuation != ";")
+            {
+                capitalizeNextWord = true;
+            }
+
+            texts
+                .Remove(texts.Length - 1, 1)
+                .Append(punctuation)
+                .Append(" ");
+        }
+
+        generatedWords = texts
+            .Remove(texts.Length - 2, 2)
+            .Append(punctuations[random.Next(3)])
+            .ToString()
+            .Split(' ');
+
+        StateHasChanged();
+    }
+
+    int CalculateWpm()
+    {
+        if (startTime == default || lastWordFinishedTime == default)
+        {
+            return 0;
+        }
+
+        var typedWordEnumerator = generatedWords.AsSpan().Slice(0, inputIndex).GetEnumerator();
+        int characterCount = 0;
+        while (typedWordEnumerator.MoveNext())
+        {
+            characterCount += typedWordEnumerator.Current.Length + 1;
+        }
+
+        characterCount--;
+
+        return (int)((characterCount / 5) / (lastWordFinishedTime - startTime).TotalMinutes);
+    }
+}
