@@ -99,7 +99,7 @@
     {
         if (firstRender)
         {
-            words = (await Http.GetStringAsync("/words.txt")).Split('\n');
+            words = (await Http.GetStringAsync("./words.txt")).Split('\n');
             GenerateRandomText();
         }
 
